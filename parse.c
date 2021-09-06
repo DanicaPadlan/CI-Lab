@@ -93,7 +93,7 @@ static node_t *build_leaf(void) {
         leaf->type = STRING_TYPE;
 
         //not sure if i set it right***
-        leaf->val->*sval = this_token.repr; 
+        leaf->val->sval = this_token.repr; 
     } 
     //more else statements?*****
 
@@ -159,7 +159,7 @@ static node_t *build_exp(void) {
                 curNode->tok = TOK_PLUS;
 
                 //should expression signs be string/*sval
-                curNode->val.*sval = this_token.repr;
+                curNode->val->sval = this_token->repr;
             } else if(this_token->ttype == TOK_BMINUS){
                 curNode->tok = TOK_BMINUS;
             } else if(this_token->ttype == TOK_TIMES){
@@ -170,7 +170,7 @@ static node_t *build_exp(void) {
                 curNode->tok = TOK_MOD;
             }
             //should expression signs be string/*sval
-            curNode->val->*sval = this_token->repr;
+            curNode->val->sval = this_token->repr;
 
             //after checking and setting up, we should move on to next token
 
