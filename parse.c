@@ -73,25 +73,27 @@ static node_t *build_leaf(void) {
 
     if(this_token->ttype == TOK_NUM){
         //set it to *leaf? leaf>
-        leaf = malloc(sizeof(atoi(this_token.repr)));
+        leaf = malloc(sizeof(atoi(this_token->repr)));
 
-        leaf->tok = this_token;
+        //incompatible setting types
+        leaf->tok = TOK_NUM;
         leaf->node_type = NT_LEAF;
         leaf->type = INT_TYPE;
 
         //not sure if i set it right
-        leaf->val.ival = atoi(this_token.repr); 
+        leaf->val.ival = atoi(this_token->repr); 
 
     } else if(this_token->ttype == TOK_STR){
         //malloc node
-        leaf = malloc(sizeof(this_token.repr.size) + 1);
+        leaf = malloc(sizeof(this_token->repr.size) + 1);
 
-        leaf->tok = this_token;
+        //incompatible setting type
+        leaf->tok = TOK_STR;
         leaf->node_type = NT_LEAF;
         leaf->type = STRING_TYPE;
 
         //not sure if i set it right***
-        leaf->val.*sval = this_token.repr; 
+        leaf->val->*sval = this_token.repr; 
     } 
     //more else statements?*****
 
@@ -128,21 +130,21 @@ static node_t *build_exp(void) {
         // (STUDENT TODO) implement the logic for internal nodes
         //create empty node we arent sure yet
         node_t *curNode = malloc(sizeof(node_t));
-        curNode.node_type = NT_INTERNAL;
+        curNode->node_type = NT_INTERNAL;
         //currently don't know if there will be an expression or not
-        curNode.type = NO_TYPE;
+        curNode->type = NO_TYPE;
 
         //left parenthesis calls for new subtree
         if(this_token->ttype == TOK_LPAREN){
             
             //should we check for certain types? more types?
             //look at next token
-            if(next_token.ttype == TOK_NUM || next_token.ttype == TOK_STR){
+            if(next_token->ttype == TOK_NUM || next_token->ttype == TOK_STR){
                 //change progress to next token
                 advance_lexer();
 
                 //check for which child is empty? 
-                curNode.children[0] = build_exp();
+                curNode->children[0] = build_exp();
                 //after setting child, it comes back up a step 
             }
 
@@ -151,24 +153,24 @@ static node_t *build_exp(void) {
         //put somewhere else?
         //when to check for binop? this_token or next_token
         //if binary operator
-        if(is_binop(this_token.ttype)){
+        if(is_binop(this_token->ttype)){
             //set curnode to appropriate expression
-            if(this_token.ttype == TOK_PLUS){
-                curNode.tok = TOK_PLUS;
+            if(this_token->ttype == TOK_PLUS){
+                curNode->tok = TOK_PLUS;
 
                 //should expression signs be string/*sval
-                curNode.val.*sval = this_token.repr;
-            } else if(this_token.ttype == TOK_BMINUS){
-                curNode.tok = TOK_BMINUS;
-            } else if(this_token.ttype == TOK_TIMES){
-                curNode.tok = TOK_TIMES;
-            } else if(this_token.ttype == TOK_DIV){
-                curNode.tok = TOK_DIV;
-            } else if(this_token.ttype == TOK_MOD){
-                curNode.tok = TOK_MOD;
+                curNode->val.*sval = this_token.repr;
+            } else if(this_token->ttype == TOK_BMINUS){
+                curNode->tok = TOK_BMINUS;
+            } else if(this_token->ttype == TOK_TIMES){
+                curNode->tok = TOK_TIMES;
+            } else if(this_token->ttype == TOK_DIV){
+                curNode->tok = TOK_DIV;
+            } else if(this_token->ttype == TOK_MOD){
+                curNode->tok = TOK_MOD;
             }
             //should expression signs be string/*sval
-            curNode.val.*sval = this_token.repr;
+            curNode->val->*sval = this_token->repr;
 
             //after checking and setting up, we should move on to next token
 
