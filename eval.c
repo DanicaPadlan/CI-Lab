@@ -31,7 +31,7 @@ static void infer_type(node_t *nptr) {
     }
 
     //we must change internal nodes and root value types without types
-    if(nptr.node_type != NT_LEAF && nptr.type == NO_TYPE){
+    if(nptr->node_type != NT_LEAF && nptr->type == NO_TYPE){
         //its based off of childrens types
          //loop through children and see their types
          //recursive part is going through children
@@ -49,7 +49,7 @@ static void infer_type(node_t *nptr) {
                 //string * int allowed if string and int and has times
                 if((nptr->type == INT_TYPE && nptr->children[x]->type == STRING_TYPE) 
                     || (nptr->type == STRING_TYPE && nptr->children[x]->type == INT_TYPE)){
-                        if(nptr->tok->ttype == TOK_TIMES){
+                        if(nptr->tok == TOK_TIMES){
                             nptr->type = STRING_TYPE;
                         }
                 }
@@ -126,9 +126,7 @@ static void eval_node(node_t *nptr) {
 
             //problem is looking at one child at a time, how to keep track of items? 
             //helper method? no hard coding children[0] and [1]!!!
-            if(){
-
-            }
+            
 
         }
     }
