@@ -85,7 +85,7 @@ static node_t *build_leaf(void) {
 
     } else if(this_token->ttype == TOK_STR){
         //malloc node
-        leaf = malloc(sizeof(this_token->repr.size) + 1);
+        leaf = malloc(sizeof(this_token->repr) + 1);
 
         //incompatible setting type
         leaf->tok = TOK_STR;
