@@ -79,6 +79,8 @@ void format_and_print(node_t *nptr) {
 int indents[MAX_PRINT_DEPTH];
 
 void print_tree_helper(node_t* node, int level) {
+    //printf("level: %i", level );
+
     if (!node)
         return;
     if (level >= MAX_PRINT_DEPTH) {
