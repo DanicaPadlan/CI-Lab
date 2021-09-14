@@ -59,59 +59,124 @@ static token_t check_reserved_ids(char *s) {
     return TOK_INVALID;
 }
 
-//did partially
-//*******!!!!!!
+//build check terop function
+bool is_terop(token_t t){
+    return t >= TOK_QUESTION && t <= TOK_COLON;
+}
+
+bool is_literal(token_t t){
+    return t >= TOK_NUM && t <= TOK_STR;
+}
+
+
+//build helper constructor method for build leaf
+//static node_t *set_leaf(){ }
+
+//build set constructor for unop 
+static void set_unop(node_t *curNode, token_t tokenType){
+    if(tokenType == TOK_UMINUS){
+        curNode->tok = TOK_UMINUS;
+    } else{
+        curNode->tok = TOK_NOT;
+    }
+    return;
+}
+
+//build set constructor for binop
+//static node_t *set_binop(){ }
+static void set_binop(node_t *curNode, token_t tokenType){
+    //figure out how to use switches after completing assignment
+    if(this_token->ttype == TOK_PLUS){
+        //printf("cur node is +\n");
+        curNode->tok = TOK_PLUS;
+    } else if(this_token->ttype == TOK_BMINUS){
+        curNode->tok = TOK_BMINUS;
+    } else if(this_token->ttype == TOK_TIMES){
+        //printf("cur node is *\n");
+        curNode->tok = TOK_TIMES;
+    } else if(this_token->ttype == TOK_DIV){
+        curNode->tok = TOK_DIV;
+    } else if(this_token->ttype == TOK_MOD){
+        curNode->tok = TOK_MOD;
+    } else if(this_token->ttype == TOK_AND){
+        curNode->tok = TOK_AND;
+    } else if(this_token->ttype == TOK_OR){
+        curNode->tok = TOK_OR;
+    } else if(this_token->ttype == TOK_LT){
+        curNode->tok = TOK_LT;
+    } else if(this_token->ttype == TOK_GT){
+        curNode->tok = TOK_GT;
+    } else {
+        curNode->tok = TOK_EQ;
+    }
+    return;
+}
+
+//build set constructor for terop
+//static node_t *set_terop(){ }
+static void set_terop(node_t *curNode, token_t tokenType){
+    if(this_token->ttype == TOK_QUESTION){
+        curNode->tok = TOK_QUESTION;
+    } 
+    return;
+}
+
 /* build_leaf() - create a leaf node based on this_token and / or next_token
  * Parameter: none
  * Return value: pointer to a leaf node
  * (STUDENT TODO) */
 static node_t *build_leaf(void) {
     //build leaf, can access token, node type, val, type, children
+    printf("inside build_leaf\n");
 
     //base case return actual node, not the address
     node_t* leaf = calloc(1, sizeof(node_t));
+    leaf->node_type = NT_LEAF;
 
     if(this_token->ttype == TOK_NUM){
-        //set it to *leaf? leaf>
-        //leaf = malloc(sizeof(int));
-
-        //incompatible setting types
+        //compatible setting types
+        //printf("I am a token! \n");
         leaf->tok = TOK_NUM;
-        leaf->node_type = NT_LEAF;
         leaf->type = INT_TYPE;
-
-        //not sure if i set it right
         leaf->val.ival = atoi(this_token->repr); 
-
-    } 
-    
-    //checkpoint 2
-    /*else if(this_token->ttype == TOK_STR){
-        //malloc node
-        //leaf = malloc(sizeof(this_token->repr) + 1);
-
-        //incompatible setting type
+        //printf("I am done setting the token\n");
+    } else if(this_token->ttype == TOK_STR){
+        char* word = malloc(strlen(this_token->repr));
+        strcpy(word, this_token->repr);
+        //compatible setting type
         leaf->tok = TOK_STR;
-        leaf->node_type = NT_LEAF;
         leaf->type = STRING_TYPE;
+        leaf->val.sval = word; 
+    } else if(this_token->ttype == TOK_FMT_SPEC){
+        leaf->tok = TOK_FMT_SPEC;
+        leaf->type = FMT_TYPE;
+        leaf->val.fval = this_token->repr[0];
 
-        //not sure if i set it right***
-        leaf->val.sval = this_token->repr; 
+    } else if(check_reserved_ids(this_token->repr) == TOK_TRUE){
+        //printf("created true leaf node\n");
+        leaf->tok = TOK_TRUE;
+        leaf->type = BOOL_TYPE;
+        leaf->val.bval = true;
+        //printf("bval %i\n", leaf->val.bval);
+    } else if(check_reserved_ids(this_token->repr) == TOK_FALSE){
+        //printf("created false leaf node\n");
+        leaf->tok = TOK_FALSE;
+        leaf->type = BOOL_TYPE;
+        leaf->val.bval = 0;
+        //printf("bval %i\n", leaf->val.bval);
     } 
-    */
+
+    //segfault problem here
+    //anything else send error
 
     //set children to null when leaf
     for(int x = 0; x < 3; x++){
         leaf->children[x] = NULL;
     }
 
-    //more else statements?*****
-    //printf("making leaf\n");
-    //no children if leaf is base case, returns address of leaf
     return leaf;
 }
 
-//********!!!!!!! did partially
 /* build_exp() - parse an expression based on this_token and / or next_token
  * Make calls to build_leaf() or build_exp() if necessary. 
  * Parameter: none
@@ -148,7 +213,7 @@ static node_t *build_exp(void) {
         curNode->node_type = NT_INTERNAL;
         //currently don't know if there will be an expression or not
         curNode->type = NO_TYPE;
-        
+
         //works for inner 
         //assumes cur node starts with l parent
         //checks for l_paren 
@@ -159,114 +224,60 @@ static node_t *build_exp(void) {
 
             //loop cursor until reach RParen
             while(this_token->ttype != TOK_RPAREN && this_token->ttype != TOK_EOL){
-                //new attempt to fix function
+
+                if(childNum >= 3){
+                    return curNode;
+                }
+                
                 advance_lexer();
+                printf("Curtoken to evaluate is: %s\n", this_token->repr);
                 if(this_token->ttype == TOK_LPAREN){
                     //printf("Theres another L_paren");
-
                     curNode->children[childNum] = build_exp();
-
-                    /*
-                    if(this_token->ttype == TOK_RPAREN){
-                        printf("I am an R from a lower level!\n");
-                    }
-                    */
-
-                    //advances to change from the RParen from the lower level
+                    
                     advance_lexer();
                     childNum++;
                     //printf("done with level");
-
-
                 } 
                 
-                if(this_token->ttype == TOK_PLUS){
-                    //printf("cur node is +\n");
-                    curNode->tok = TOK_PLUS;
-                } else if(this_token->ttype == TOK_BMINUS){
-                    curNode->tok = TOK_BMINUS;
-                } else if(this_token->ttype == TOK_TIMES){
-                    curNode->tok = TOK_TIMES;
-                } else if(this_token->ttype == TOK_DIV){
-                 curNode->tok = TOK_DIV;
-                } else if(this_token->ttype == TOK_MOD){
-                    curNode->tok = TOK_MOD;
-                } else if(this_token->ttype == TOK_NUM){
-                    curNode->children[childNum] = build_exp();
-                    //printf("child's value: %i \n", curNode->children[childNum]->val.ival);
-                    childNum++;
-                } 
-                //og function need to fix tbh
-                //check for another parenthesis, go down a level
-                /*
-                if(next_token->ttype == TOK_LPAREN){
-                    printf("Theres another followin L_paren\n");
-                    advance_lexer();
-                    curNode->children[childNum] = build_exp();
-                    printf("found R_paren, move on\n");
-                    //beforehand this_token is on R_paren
-                    //after advancing moved on
-                    advance_lexer(); 
-                    childNum++; //move on ot next childS
-                    printf("moved on to %s \n", this_token->repr);
-                } 
+                //checking for num of children first would be good
+                //create separate method
+                //checking unary operations
+                if(is_unop(this_token->ttype)){
+                    printf("setting a unop\n");
+                    if(curNode->tok == TOK_QUESTION && this_token->ttype != TOK_COLON ){
+                        handle_error(ERR_SYNTAX);
+                    }
+                    set_unop(curNode,this_token->ttype);
+                //checking binary operations
+                } else if(is_binop(this_token->ttype)){
+                    set_binop(curNode,this_token->ttype);
+                //checking tertiary terms 
+                } else if(is_terop(this_token->ttype)){
+                    set_terop(curNode,this_token->ttype);
                 
-            
-                if(this_token->ttype == TOK_PLUS){
-                    printf("cur node is +\n");
-                    curNode->tok = TOK_PLUS;
-                } else if(this_token->ttype == TOK_BMINUS){
-                    curNode->tok = TOK_BMINUS;
-                } else if(this_token->ttype == TOK_TIMES){
-                    curNode->tok = TOK_TIMES;
-                } else if(this_token->ttype == TOK_DIV){
-                 curNode->tok = TOK_DIV;
-                } else if(this_token->ttype == TOK_MOD){
-                    curNode->tok = TOK_MOD;
-                } else if(this_token->ttype == TOK_NUM){
+                //this is not working ****!!!!!
+                } else if(is_literal(this_token->ttype) || check_reserved_ids(this_token->repr) != TOK_INVALID ){
+                    //printf("I am in literal\n");
+                    /*printf("child num: %i, \n", childNum);
+                    printf("before change, child value is: ");
+                    if(curNode->children[childNum] == NULL){
+                        printf("NULL\n");
+                    } else{
+                        printf("%s\n", curNode->children[childNum]->val.sval);
+                    }
+                    */
+                    //printf("currently going to child %i for %s\n", childNum,this_token->repr);
                     curNode->children[childNum] = build_exp();
-                    printf("child's value: %i \n", curNode->children[childNum]->val.ival);
+                    //printf("child num: %i, ", childNum);
+                    //printf("child's value: %s \n", curNode->children[childNum]->val.sval);
                     childNum++;
                 } 
-                //go to token
-                advance_lexer();
-                printf("i am still down one level\n");
-                if(this_token->ttype == TOK_RPAREN){
-                    printf("i will exit out of the loop \n");
-                }
-                */
+                //printf("I am still in the ()\n");
             }
             //printf("i got out of the level! going back up to parent\n");
-            //continue checks?
-            return curNode;
+            
         } 
-
-        //moving around code
-
-
-
-
-
-
-        /*
-        //check for expression
-        if(this_token->ttype == TOK_PLUS){
-            printf("cur node is + outside of LParen check\n");
-            curNode->tok = TOK_PLUS;
-        } else if(this_token->ttype == TOK_BMINUS){
-            curNode->tok = TOK_BMINUS;
-        } else if(this_token->ttype == TOK_TIMES){
-            curNode->tok = TOK_TIMES;
-        } else if(this_token->ttype == TOK_DIV){
-            curNode->tok = TOK_DIV;
-        } else if(this_token->ttype == TOK_MOD){
-            curNode->tok = TOK_MOD;
-        }
-        */
-        //return the node that we set up? or there can be instances when we do not return anything
-        //if right parenthesis, subtree is done go back up and send nothing
-        //printf("returning to parent, current token holds %s\n", this_token->repr);
-        //printf("i was either an expression or did not pass the L_paren loop\n");
         return curNode;
     }
 }
@@ -312,6 +323,7 @@ static node_t *build_root(void) {
         ret->children[1] = build_exp();
         
         if (next_token->ttype != TOK_EOL) {
+            printf("next token is not TOK_EOL\n");
             handle_error(ERR_SYNTAX);
         }
 
@@ -332,6 +344,8 @@ static node_t *build_root(void) {
      * syntactically valid tokens that could remain would be format specifiers */    
         // check that our next token is a format specifier
         if (next_token->ttype != TOK_SEP) {
+            //******** errors reach here??
+            printf("next token is not TOK_SEP\n");
             handle_error(ERR_SYNTAX);
             return ret;
         }
@@ -340,6 +354,7 @@ static node_t *build_root(void) {
         
         // check that there is an ID following the format specifier
         if (next_token->ttype != TOK_ID) {
+            printf("next token is not TOK_ID\n");
             handle_error(ERR_SYNTAX);
             return ret;
         }
@@ -348,6 +363,7 @@ static node_t *build_root(void) {
         if (id_is_fmt_spec(next_token->repr))
             next_token->ttype = TOK_FMT_SPEC;
         if (next_token->ttype != TOK_FMT_SPEC) {
+            printf("next token is not TOK_FMT_SPEC\n");
             handle_error(ERR_SYNTAX);
             return ret;
         }
@@ -358,6 +374,7 @@ static node_t *build_root(void) {
         // if any tokens besides EOL remain, the syntax is not valid
         ret->children[1] = build_leaf();
         if (next_token->ttype != TOK_EOL) {
+            printf("next token is not TOK_EOL2\n");
             handle_error(ERR_SYNTAX);
             return ret;
         }
@@ -365,6 +382,7 @@ static node_t *build_root(void) {
         return ret;
     }
 
+    printf("overall err syntax\n");
     // this return statement will only be reached if there was a syntax error
     handle_error(ERR_SYNTAX);
     return ret;
@@ -378,13 +396,25 @@ node_t *read_and_parse(void) {
     return build_root();
 }
 
-//******!!!!!!!
+//******!!!!!!! tried it but not sure
 /* cleanup() - given the root of an AST, free all associated memory
  * Parameter: The root of an AST
  * Return value: none
  * (STUDENT TODO) */
 void cleanup(node_t *nptr) {
     // Is it enough to free the node the function called upon?
+    //starts at root 
+    /*
+    if(nptr == NULL){
+        return;
+    }
+
+    //loop through children
+    for(int x = 0; x < 3; x++){
+        cleanup(nptr->children[x]);
+    }
+
     free(nptr);
+    */
     return;
 }
