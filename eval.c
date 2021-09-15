@@ -24,7 +24,7 @@ char *strrev(char *str);
  */
 //recursive method too**** fix bc must go to leaves//????help need to do bc it effects eval
 static void infer_type(node_t *nptr) {
-    printf("in infer_type\n");
+    //printf("in infer_type\n");
     //sent in a node
     //look at children 
     //set up the children types
@@ -73,7 +73,7 @@ static void infer_type(node_t *nptr) {
         //ternary operation check
     } else{
         if(nptr->children[0]->type != BOOL_TYPE || nptr->children[1]->type != nptr->children[2]->type ){
-        handle_error(ERR_TYPE);
+            handle_error(ERR_TYPE);
         }
     }
 
@@ -95,10 +95,10 @@ static void infer_type(node_t *nptr) {
  * Side effect: The type field of the node is updated. 
  */
 static void infer_root(node_t *nptr) {
-    printf("in infer_root\n");
+    //printf("in infer_root\n");
     //checks for null
     if (nptr == NULL){
-        printf("infer type null : \n");
+        //printf("infer type null : \n");
         return; 
     } 
     
@@ -157,7 +157,7 @@ void nullChildren(node_t *curNode){
  */
 
 static void eval_node(node_t *nptr) {
-    printf("in eval node\n");
+    //printf("in eval node\n");
 
     //take current operation from cur node (+-*/%,etc)
     //determine action based on 
@@ -174,17 +174,46 @@ static void eval_node(node_t *nptr) {
     //if not the bottom of the tree, go down recursively
     //check children first, should compute all the way down
     for(int i = 0; i < 3; i++){
-        printf("i am looping\n");
-        eval_node(nptr->children[i]);
-        
+        //printf("i am looping\n");
+
+        //ternary special case
+        if(nptr->tok == TOK_QUESTION){
+            eval_node(nptr->children[0]);
+        }  else{
+            eval_node(nptr->children[i]);
+        }
     }
 
-    if(nptr->type == STRING_TYPE){
-        printf("i am a string type\n");
+    if(nptr->tok == TOK_QUESTION){
+        if(nptr->children[0]->val.bval){
+            if(nptr->type == INT_TYPE){
+                eval_node(nptr->children[1]);
+                nptr->val.ival = nptr->children[1]->val.ival;
+            } else if(nptr->type == STRING_TYPE){
+                eval_node(nptr->children[1]);
+                nptr->val.sval = nptr->children[1]->val.sval;
+            } else{
+                eval_node(nptr->children[1]);
+                nptr->val.bval = nptr->children[1]->val.bval;
+            }
+        } else{
+            if(nptr->type == INT_TYPE){
+                eval_node(nptr->children[2]);
+                nptr->val.ival = nptr->children[2]->val.ival;
+            } else if(nptr->type == STRING_TYPE){
+                eval_node(nptr->children[2]);
+                nptr->val.sval = nptr->children[2]->val.sval;
+            } else{
+                eval_node(nptr->children[2]);
+                nptr->val.bval = nptr->children[2]->val.bval;
+            }
+        }
+    } else if(nptr->type == STRING_TYPE){
+        //printf("i am a string type\n");
         char* word;
         if(nptr->tok == TOK_PLUS){
             if(nptr->children[0]->type == STRING_TYPE && nptr->children[1]->type == STRING_TYPE){
-                printf("I will add 2 strings together\n");
+                //printf("I will add 2 strings together\n");
                 word = malloc((strlen(nptr->children[0]->val.sval) - 1) + strlen(nptr->children[1]->val.sval));
                 strcat(word, nptr->children[0]->val.sval);
                 strcat(word, nptr->children[1]->val.sval);
@@ -207,7 +236,7 @@ static void eval_node(node_t *nptr) {
                     nptr->tok = TOK_STR;
             }
         } else if(nptr->tok == TOK_UMINUS){
-            printf("going in uminus\n");
+            //printf("going in uminus\n");
             word = strrev(nptr->children[0]->val.sval);
             nptr->val.sval = word;
             nptr->tok = TOK_STR;
@@ -217,7 +246,7 @@ static void eval_node(node_t *nptr) {
 
     
     } else if(nptr->type == BOOL_TYPE){
-        printf("entering boolean type\n");
+        //printf("entering boolean type\n");
         if(nptr->tok == TOK_EQ){
             if(nptr->children[0]->type == BOOL_TYPE && nptr->children[1]->type == BOOL_TYPE){
                 nptr->val.bval = (nptr->children[0]->val.bval == nptr->children[1]->val.bval);
@@ -266,15 +295,13 @@ static void eval_node(node_t *nptr) {
                 nptr->val.bval = (nptr->children[0]->val.bval && nptr->children[1]->val.bval);
                 nptr->tok = (nptr->val.bval == true ? TOK_TRUE : TOK_FALSE);
             }
-
-            //booleans not working
         } else if(nptr->tok == TOK_NOT){
             if(nptr->children[0]->type == BOOL_TYPE){
-                printf("boolean type is: %i\n", nptr->val.bval);
+                //printf("boolean type is: %i\n", nptr->val.bval);
                 nptr->val.bval = (nptr->children[0]->val.bval) == true ? false : true;
 
                 nptr->tok = (nptr->val.bval == true ? TOK_TRUE : TOK_FALSE);
-                printf("boolean type is: %i\n", nptr->val.bval);
+                //printf("boolean type is: %i\n", nptr->val.bval);
             }
         } else{
             handle_error(ERR_EVAL);
@@ -299,11 +326,13 @@ static void eval_node(node_t *nptr) {
                     handle_error(ERR_EVAL);
                 }
             } else if(nptr->tok == TOK_MOD){
-
                 if(nptr->children[1]->val.ival != 0){
                    nptr->val.ival = nptr->children[0]->val.ival % nptr->children[1]->val.ival; 
                    nptr->tok = TOK_NUM;
-                } else{
+                } else if(nptr->children[0]->val.ival < nptr->children[1]->val.ival){
+                    nptr->val.ival = nptr->children[0]->val.ival;
+                    nptr->tok = TOK_NUM;
+                }else{
                     handle_error(ERR_EVAL);
                 }
                 
@@ -318,7 +347,7 @@ static void eval_node(node_t *nptr) {
     }
    
     nullChildren(nptr);
-    printf("done with eval node\n");
+    //printf("done with eval node\n");
     return;
 }
 
@@ -329,7 +358,7 @@ static void eval_node(node_t *nptr) {
  */
 
 void eval_root(node_t *nptr) {
-    printf("In eval_root \n");
+    //printf("In eval_root \n");
     if (nptr == NULL) return; 
     // check running status
     if (terminate || ignore_input) return;
@@ -354,11 +383,6 @@ void eval_root(node_t *nptr) {
     if (terminate || ignore_input) return;
     
     if (nptr->type == STRING_TYPE) {
-        //debugging
-        printf("I caught a string type in eval_root\n");
-        if(nptr->children[0]->val.sval == NULL){
-            printf("the child is null tho\n");
-        }
 
         (nptr->val).sval = (char *) malloc(strlen(nptr->children[0]->val.sval) + 1);
         if (! nptr->val.sval) {
@@ -399,6 +423,6 @@ char *strrev(char *str) {
         revPlace++;
     }
     rev[revPlace] = '\0';
-    printf("revstring is %s", rev);
+    //printf("revstring is %s", rev);
     return rev;
 }

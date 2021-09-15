@@ -1,1 +1,5 @@
-TODO by checkpoint 2: Replace this with your non-trivial test case(s).
+(1 + 2)
+("cs" + 429)
+(1%5)
+(!true) 
+(true ? 1 : 2)
