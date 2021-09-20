@@ -102,6 +102,7 @@ entry_t * init_entry(char *id, node_t *nptr) {
     return eptr;
 }
 
+//think i did this decently
 /* put() - insert an entry into the hashtable or update the existing entry.
  * Use a linked list to handle collisions.
  * Parameters: Variable name, pointer to a node.
@@ -112,15 +113,75 @@ entry_t * init_entry(char *id, node_t *nptr) {
  */
 
 void put(char *id, node_t *nptr) {
+    printf("setting up an entry in table\n");
+    if(id == NULL || nptr == NULL){
+        return;
+        //error or return blank
+    }
+    //call hash function to get variables index
+    long index = hash_function(id);
+
+    //check if index is in range
+    if(index >= 0 &&index < CAPACITY){
+
+        entry_t* check = get(id);
+        //check if exist first
+        if(check != NULL){
+            if(nptr->type == INT_TYPE){
+                check->type = INT_TYPE;
+                check->val.ival = nptr->val.ival;
+            } else if(nptr->type == STRING_TYPE){
+                check->type = STRING_TYPE;
+                //no need to worry about mallocing and freeing
+                check->val.sval = nptr->val.sval;
+            } else if(nptr->type == BOOL_TYPE){
+                check->type = BOOL_TYPE;
+                check->val.bval = nptr->val.bval; 
+            } else{
+                //error?
+                printf("Not one of the valid types!\n");
+            }
+
+        //does not exist    
+        } else{
+            printf("variable does not exist\n");
+            //problems, dont know how to 
+            if(var_table->entries[index] == NULL){
+                printf("linkedlist is null\n");
+                var_table->entries[index] = init_entry(id, nptr);
+                //print_entry(var_table->entries[index]);
+            } else{
+                entry_t* curEntry = var_table->entries[index];
+                //finds place to put 
+                //if the next entry is null, stop loop 
+                while(curEntry != NULL && curEntry->next != NULL){
+                    curEntry = curEntry->next;
+                }
+                //build a entry and connect the curEntry's next to the new next
+                curEntry->next = init_entry(id, nptr);
+            }
+
+        }
+    }
     return;
 }
 
+//maybe i did this right
 /* get() - search for an entry in the hashtable.
  * Parameter: Variable name.
  * Return value: Pointer to the matching entry, or NULL if not found.
  * (STUDENT TODO) 
  */
 entry_t* get(char* id) {
+    //find according 
+    long index = hash_function(id);
+    entry_t* curEntry = var_table->entries[index];
+    while(curEntry != NULL){
+        if(id == curEntry->id){
+            return curEntry;
+        }
+        curEntry = curEntry->next;
+    }
     return NULL;
 }
 

@@ -15,39 +15,42 @@ extern bool is_binop(token_t);
 extern bool is_unop(token_t);
 char *strrev(char *str);
 
-//*******!!!!!!!
+//***set id variable in here to make eval easier
+//when to init table? maybe here 
 /* infer_type() - set the type of a non-root node based on the types of children
  * Parameter: A node pointer, possibly NULL.
  * Return value: None.
  * Side effect: The type field of the node is updated.
  * (STUDENT TODO)
  */
-//recursive method too**** fix bc must go to leaves//????help need to do bc it effects eval
 static void infer_type(node_t *nptr) {
     //printf("in infer_type\n");
     //sent in a node
     //look at children 
     //set up the children types
-
+    //keeps going in null, specific case 
+    //**** gets caught up here
     if(nptr == NULL || nptr->node_type == NT_LEAF){
-        //printf("pointer is null\n");
+        printf("pointer is null\n");
         return;
-    }
+    } 
 
     //printf("i will loop through children \n");
     //go and check each child for type
     for(int x = 0; x < 3; x++){    
         if(nptr->children[x] != NULL){
             //check no type was here
-            //if no_type //change place of this
-            if(nptr->children[x]-> type == NO_TYPE){
+            //if no_type OR *id type
+            if(nptr->children[x]-> type == NO_TYPE || nptr->children[x]-> type == ID_TYPE){
                 //printf("going through children\n");
                 infer_type(nptr->children[x]);
             }
         }
     }
 
-    if(is_unop(nptr->tok)){
+    //not sure how to infer id types?
+    //bc put is being called in eval_root
+   if(is_unop(nptr->tok)){
         if(nptr->tok == TOK_NOT && nptr->children[0]->type != BOOL_TYPE ){
             handle_error(ERR_TYPE);
         } else if(nptr->tok == TOK_UMINUS && nptr->children[0]->type != STRING_TYPE && nptr->children[0]->type != INT_TYPE ){
@@ -105,10 +108,11 @@ static void infer_root(node_t *nptr) {
     // check running status
     if (terminate || ignore_input) return;
 
-    // check for ID type
+    // check for ID type //there could be two cases, 
     if (nptr->type == ID_TYPE) {
-
-        //calls infer_type
+        printf("I am being caught as an ID type\n");
+        //calls infer_type on child 1 for id type
+        //why calling infer type? potentially for non-leaf node operations
         infer_type(nptr->children[1]);
     } else {
         //goes through all children,recursive step?
@@ -184,7 +188,38 @@ static void eval_node(node_t *nptr) {
         }
     }
 
-    if(nptr->tok == TOK_QUESTION){
+    //getting the type***
+    if(nptr->type == ID_TYPE){
+        //first check if the id child[0] exists
+        if(get(nptr->children[0]->val.sval) == NULL){
+            handle_error(ERR_EVAL);
+        }
+        //else it does exist
+        //call get to get the entry
+        entry_t* curEntry = get(nptr->children[0]->val.sval);
+        
+        //assuming the id is not being set and the id node does not have children
+        //clearing id name type
+        nptr->val.sval = NULL;
+
+        //changing type and values of node!
+        if(curEntry->type == INT_TYPE){
+            nptr->type = INT_TYPE;
+            nptr->val.ival = curEntry->val.ival;
+        } else if(curEntry->type == STRING_TYPE){
+            nptr->type = STRING_TYPE;
+            nptr->val.sval = curEntry->val.sval;
+        } else if(curEntry->type == BOOL_TYPE){
+            nptr->type = BOOL_TYPE;
+            nptr->val.bval = curEntry->val.bval;
+        } else{
+            //can we assume that the variable will not be a format variable
+            //throw error
+        }
+    }
+
+    //special case ternary
+    else if(nptr->tok == TOK_QUESTION){
         if(nptr->children[0]->val.bval){
             if(nptr->type == INT_TYPE){
                 eval_node(nptr->children[1]);
@@ -363,16 +398,24 @@ void eval_root(node_t *nptr) {
     // check running status
     if (terminate || ignore_input) return;
 
+    //for root nodes that are id type (cant assume we will always have an id in the root node)
     // check for assignment
     if (nptr->type == ID_TYPE) {
+        //evaluates value child
         eval_node(nptr->children[1]);
         if (terminate || ignore_input) return;
         
+        //checks if the id is null/ does not exist
         if (nptr->children[0] == NULL) {
             logging(LOG_ERROR, "failed to find child node");
             return;
         }
+
+        //puts in the entry in the table, maybe this is wrong
         put(nptr->children[0]->val.sval, nptr->children[1]);
+        //debugging purpose**
+        printf("print table\n");
+        print_table();
         return;
     }
 
@@ -404,6 +447,8 @@ void eval_root(node_t *nptr) {
 
 void infer_and_eval(node_t *nptr) {
     infer_root(nptr);
+    //printf("After infer type\n");
+    //print_tree(nptr);
     eval_root(nptr);
     return;
 }

@@ -164,16 +164,26 @@ static node_t *build_leaf(void) {
         leaf->type = BOOL_TYPE;
         leaf->val.bval = 0;
         //printf("bval %i\n", leaf->val.bval);
-    } 
-
-    //segfault problem here
-    //anything else send error
-
-    //set children to null when leaf
-    for(int x = 0; x < 3; x++){
-        leaf->children[x] = NULL;
+        //do i need this??
+    } else if(this_token->ttype == TOK_ID){
+        //getting/setting var name
+        char* varName = malloc(strlen(this_token->repr));
+        strcpy(varName, this_token->repr);
+        leaf->type = ID_TYPE;
+        //setting variable name
+        leaf->val.sval = varName;
+    } else{
+        //error?
     }
 
+    //isn't all the children already null? do i really need to check?
+    //special case for ID_TYPE //do i need this code? 
+    if(leaf->type != ID_TYPE){
+        //set children to null when leaf
+        for(int x = 0; x < 3; x++){
+            leaf->children[x] = NULL;
+        }
+    } 
     return leaf;
 }
 
@@ -250,12 +260,34 @@ static node_t *build_exp(void) {
                     }
                     //dont do anything with the colon token 
 
-                //checks for literals and strings
-                } else if(is_literal(this_token->ttype) || check_reserved_ids(this_token->repr) != TOK_INVALID ){
+                //checks for variable types, special case first time creation
+                } else if(this_token->ttype == TOK_ID && next_token->ttype == TOK_ASSIGN){
+                    //note: parent node - type ID
+                    //      child[0] - create string/variable name
+                    //      child[1] - set value
+
+                    //set current to tok id 
+                    //curNode->tok = TOK_ID; //didnt need to do this
+
+                    //call build leaf to set the variable name for children
+                    curNode->children[0] = build_leaf();
+
+                    //advance to skip cur variable name to =
+                    advance_lexer();
+                    //advance from = to the actual value of the variable
+                    advance_lexer();
+
+                    //either catches literal type early or goes on in reading the line
+                    curNode->children[1] = build_exp();
+
+                //checks for literals and strings, and assuming already developed strings
+                } else if(is_literal(this_token->ttype) || check_reserved_ids(this_token->repr) != TOK_INVALID || this_token->ttype == TOK_ID){
                     //printf("I am in literal\n");
                     curNode->children[childNum] = build_exp();
                     childNum++;
-                } else if(this_token->ttype == TOK_RPAREN && next_token->ttype == TOK_RPAREN){
+                //special variable case? maybe works idk    
+                } 
+                else if(this_token->ttype == TOK_RPAREN && next_token->ttype == TOK_RPAREN){
                      advance_lexer();
                 } 
                 //printf("I am still in the ()\n");
@@ -297,14 +329,18 @@ static node_t *build_root(void) {
             return ret;
         }
 
-        //changes type
+        //changes type of the current node for what it evaluates to later
         ret->type = ID_TYPE;
 
         //calls build leaf for children [0]
+        //to build string name perhaps
         ret->children[0] = build_leaf();
 
+        //moves from varName to =
         advance_lexer();
+        // = to value the variable is being set to 
         advance_lexer();
+        //if literal, it will set other child to value of the variable
         ret->children[1] = build_exp();
         
         if (next_token->ttype != TOK_EOL) {
@@ -382,7 +418,7 @@ node_t *read_and_parse(void) {
     return build_root();
 }
 
-//******!!!!!!! tried it but not sure
+//idk if this works but i try
 /* cleanup() - given the root of an AST, free all associated memory
  * Parameter: The root of an AST
  * Return value: none
@@ -400,7 +436,10 @@ void cleanup(node_t *nptr) {
         cleanup(nptr->children[x]);
     }
 
-    free(nptr);
+    if(nptr->type == STRING_TYPE){
+        free(nptr->val.sval);
+    }
     */
+    free(nptr);
     return;
 }
