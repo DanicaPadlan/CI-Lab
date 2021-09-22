@@ -75,6 +75,7 @@ entry_t * init_entry(char *id, node_t *nptr) {
         return NULL;
     }
     entry_t *eptr = (entry_t *) calloc(1, sizeof(entry_t));
+    //printf("i am mallocing\n");
     if (! eptr) {
         logging(LOG_FATAL, "failed to allocate entry");
         return NULL;
@@ -97,8 +98,11 @@ entry_t * init_entry(char *id, node_t *nptr) {
         }
         strcpy(eptr->val.sval, nptr->val.sval);
     } else {
+        //printf("i am saving an int variable\n");
         eptr->val.ival = nptr->val.ival;
     }
+    //printf("malloced memory for variable\n");
+    //print_entry(eptr);
     return eptr;
 }
 
@@ -121,9 +125,9 @@ void put(char *id, node_t *nptr) {
     //call hash function to get variables index
     long index = hash_function(id);
 
-    //check if index is in range
-    if(index >= 0 &&index < CAPACITY){
-
+    if(index < 0 && index >= CAPACITY){
+        printf("error! index is out of bounds\n ");
+    } else{
         entry_t* check = get(id);
         //check if exist first
         if(check != NULL){
@@ -144,12 +148,14 @@ void put(char *id, node_t *nptr) {
 
         //does not exist    
         } else{
-            printf("variable does not exist\n");
             //problems, dont know how to 
             if(var_table->entries[index] == NULL){
-                printf("linkedlist is null\n");
-                var_table->entries[index] = init_entry(id, nptr);
-                //print_entry(var_table->entries[index]);
+                //its going in table just get() is not right
+                //printf("index: %li\n", index);
+                var_table->entries[index] =  init_entry(id, nptr);
+
+                printf("printing table\n");
+                print_table();
             } else{
                 entry_t* curEntry = var_table->entries[index];
                 //finds place to put 
@@ -160,8 +166,9 @@ void put(char *id, node_t *nptr) {
                 //build a entry and connect the curEntry's next to the new next
                 curEntry->next = init_entry(id, nptr);
             }
-
         }
+        
+
     }
     return;
 }
@@ -173,15 +180,28 @@ void put(char *id, node_t *nptr) {
  * (STUDENT TODO) 
  */
 entry_t* get(char* id) {
-    //find according 
+    //printf("in get\n");
+    //find according to return of hash function
     long index = hash_function(id);
+
+    //this is null,
     entry_t* curEntry = var_table->entries[index];
+
+    if(curEntry == NULL){
+        //printf("getting my curEntry is null\n");
+    }else{
+        //printf("getting my curEntry is NOT null\n");
+    }
+
     while(curEntry != NULL){
-        if(id == curEntry->id){
+        //printf("searching for %s, the current entry is %s\n", id, curEntry->id);
+        if(strcmp(id, curEntry->id) == 0){
+            //printf("i am returning the entry i found!");
             return curEntry;
         }
         curEntry = curEntry->next;
     }
+    //printf("returning null\n");
     return NULL;
 }
 

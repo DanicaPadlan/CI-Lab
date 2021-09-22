@@ -169,6 +169,7 @@ static node_t *build_leaf(void) {
         //getting/setting var name
         char* varName = malloc(strlen(this_token->repr));
         strcpy(varName, this_token->repr);
+        leaf->tok = TOK_ID;
         leaf->type = ID_TYPE;
         //setting variable name
         leaf->val.sval = varName;
@@ -281,15 +282,17 @@ static node_t *build_exp(void) {
                     curNode->children[1] = build_exp();
 
                 //checks for literals and strings, and assuming already developed strings
-                } else if(is_literal(this_token->ttype) || check_reserved_ids(this_token->repr) != TOK_INVALID || this_token->ttype == TOK_ID){
+                } else if(is_literal(this_token->ttype) || check_reserved_ids(this_token->repr) != TOK_INVALID){
                     //printf("I am in literal\n");
                     curNode->children[childNum] = build_exp();
                     childNum++;
                 //special variable case? maybe works idk    
                 } 
+                /*
                 else if(this_token->ttype == TOK_RPAREN && next_token->ttype == TOK_RPAREN){
                      advance_lexer();
                 } 
+                */
                 //printf("I am still in the ()\n");
             }
             //printf("i got out of the level! going back up to parent\n");
@@ -418,7 +421,7 @@ node_t *read_and_parse(void) {
     return build_root();
 }
 
-//idk if this works but i try
+//do this after
 /* cleanup() - given the root of an AST, free all associated memory
  * Parameter: The root of an AST
  * Return value: none

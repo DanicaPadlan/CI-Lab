@@ -28,6 +28,8 @@ void format_and_print(node_t *nptr) {
     }
     
     if (!nptr) {
+        //debugging
+        //printf("I am a null\n");
         logging(LOG_ERROR, "failed to print the node");
         fprintf(outfile, "%s", ci_prompt);
         return;

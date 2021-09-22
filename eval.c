@@ -26,12 +26,16 @@ char *strrev(char *str);
 static void infer_type(node_t *nptr) {
     //printf("in infer_type\n");
     //sent in a node
+
     //look at children 
     //set up the children types
     //keeps going in null, specific case 
     //**** gets caught up here
     if(nptr == NULL || nptr->node_type == NT_LEAF){
-        printf("pointer is null\n");
+        //printf("pointer is null\n"); 
+        if(nptr ){
+
+        }
         return;
     } 
 
@@ -47,6 +51,20 @@ static void infer_type(node_t *nptr) {
             }
         }
     }
+
+    /*
+    //idk about variables anymore,,,
+    if(nptr->tok == TOK_ID){
+       //it already exists
+        if(nptr->val.sval != NULL && get(nptr->val.sval) != NULL){
+            printf("found variable trying \n");
+            nptr->type = get(nptr->val.sval)->type;
+        //does not exist, needs to be created 
+        } 
+    }
+    */
+
+
 
     //not sure how to infer id types?
     //bc put is being called in eval_root
@@ -73,8 +91,8 @@ static void infer_type(node_t *nptr) {
          } else if( (nptr->tok == TOK_LT || nptr->tok == TOK_GT) && nptr->children[0]->type == BOOL_TYPE){
          handle_error(ERR_TYPE);
         }
-        //ternary operation check
     } else{
+        //ternary operation check
         if(nptr->children[0]->type != BOOL_TYPE || nptr->children[1]->type != nptr->children[2]->type ){
             handle_error(ERR_TYPE);
         }
@@ -162,15 +180,11 @@ void nullChildren(node_t *curNode){
 
 static void eval_node(node_t *nptr) {
     //printf("in eval node\n");
-
     //take current operation from cur node (+-*/%,etc)
-    //determine action based on 
-    //create variable based on curnode type?
-    //?????? help
-
     //printf("I am about to check pre-conditions\n");
     if(nptr == NULL || nptr->node_type == NT_LEAF){
         //printf("i check pre-conditions\n");
+        //checks for id tok in leaf node
         return;
     }
 
@@ -188,7 +202,18 @@ static void eval_node(node_t *nptr) {
         }
     }
 
-    //getting the type***
+    //fix after finishing first 2 test
+    //dealing with tok id internal node
+    if(nptr->tok == TOK_ID){
+        //check if id already exists, if it does base it off of the variable from the table
+        if(nptr->val.sval != NULL && get(nptr->val.sval) != NULL){
+            printf("the id node has an identifier name and a variable in the table\n");
+        }
+        //determine the return type based on children[1]
+    }
+
+
+    /*
     if(nptr->type == ID_TYPE){
         //first check if the id child[0] exists
         if(get(nptr->children[0]->val.sval) == NULL){
@@ -200,7 +225,7 @@ static void eval_node(node_t *nptr) {
         
         //assuming the id is not being set and the id node does not have children
         //clearing id name type
-        nptr->val.sval = NULL;
+        //nptr->val.sval = NULL;
 
         //changing type and values of node!
         if(curEntry->type == INT_TYPE){
@@ -217,6 +242,7 @@ static void eval_node(node_t *nptr) {
             //throw error
         }
     }
+    */
 
     //special case ternary
     else if(nptr->tok == TOK_QUESTION){
@@ -411,11 +437,10 @@ void eval_root(node_t *nptr) {
             return;
         }
 
-        //puts in the entry in the table, maybe this is wrong
+        //applies to a certain case tho
+        //puts in the entry in the table
         put(nptr->children[0]->val.sval, nptr->children[1]);
-        //debugging purpose**
-        printf("print table\n");
-        print_table();
+
         return;
     }
 
